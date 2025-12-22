@@ -1,0 +1,15 @@
+[
+  {
+    "id": 1,
+    "name": "Ivanov",
+    "details": {
+      "age": 30,
+      "address": {
+        "city": "Moscow",
+        "street": "Lenina"
+      }
+    },
+    "skills": ["Lua", "C++"]
+  }
+]
+

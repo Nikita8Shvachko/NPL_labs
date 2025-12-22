@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "name": "Ivanov \"The Great\" Ivan",
+    "is_active": true,
+    "role": "Senior Developer",
+    "salary": 150000.50,
+    "contact": {
+      "email": "ivanov@example.com",
+      "phone": null,
+      "address": {
+        "city": "Moscow",
+        "street": "Tverskaya, 1",
+        "zip": -101.000
+      }
+    },
+    "skills": ["Lua", "C++", "Python"],
+    "projects": [
+      {
+        "name": "SuperApp",
+        "status": "completed"
+      },
+      {
+        "name": "NextGen",
+        "status": "in_progress"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Petrov Petr",
+    "is_active": false,
+    "role": "Manager",
+    "salary": 120000,
+    "contact": {
+      "email": "petrov@example.com",
+      "phone": "+79990000000"
+    },
+    "skills": ["Management", "Agile"],
+    "projects": []
+  }
+]

@@ -1,0 +1,4 @@
+gmail.com: 6
+mysite.org: 4
+corp.io: 2
+sub.domain.net: 2

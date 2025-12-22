@@ -1,0 +1,9 @@
+width: 800
+height: 600
+max_iterations: 1000
+frames: 30
+threads: 4
+zoom_rate: 0.9
+focus_x: -0.5
+focus_y: 0.0
+output_file: mandelbrot.ppm

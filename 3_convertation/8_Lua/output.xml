@@ -1,0 +1,16 @@
+<employees>
+  <employee id="1">
+    <skills>
+      <item>Lua</item>
+      <item>C++</item>
+      </skills>
+    <details>
+      <address>
+        <street>Lenina</street>
+        <city>Moscow</city>
+        </address>
+      <age>30</age>
+      </details>
+    <name>Ivanov</name>
+  </employee>
+</employees>

@@ -1,0 +1,32 @@
+<employees>
+  <employee id="1">
+    <role>Developer</role>
+    <salary>100000</salary>
+    <name>Ivanov Ivan</name>
+  </employee>
+  <employee id="2">
+    <role>Manager</role>
+    <salary>150000</salary>
+    <name>Petrov Petr</name>
+  </employee>
+  <employee id="3">
+    <role>Designer</role>
+    <salary>120000</salary>
+    <name>Sidorova Anna</name>
+  </employee>
+    <employee id="4">
+    <role>Developer</role>
+    <salary>100000</salary>
+    <name>Ivanov Ivan</name>
+  </employee>
+  <employee id="5">
+    <role>Manager</role>
+    <salary>150000</salary>
+    <name>Petrov Petr</name>
+  </employee>
+  <employee id="6">
+    <role>Designer</role>
+    <salary>120000</salary>
+    <name>Sidorova Anna</name>
+  </employee>
+</employees>

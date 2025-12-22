@@ -1,0 +1,12 @@
+Привет! Напиши мне на alex@gmail.com или на work@corp.io.
+Кстати, support@gmail.com тоже работает, как и info@GMAIL.COM.
+Не забудь про admin@mysite.org и user123@sub.domain.net.
+А вот это не почта: not_an_email@@gmail,com, plain text.
+Еще один адрес: contact@mysite.org.
+Привет! Напиши мне на alex@gmail.com или на work@corp.io.
+Кстати, support@gmail.com тоже работает, как и info@GMAIL.COM.
+Не забудь про admin@mysite.org и user123@sub.domain.net.
+А вот это не почта: not_an_email@@gmail,com, plain text.
+Еще один адрес: contact@mysite.org.
+
+

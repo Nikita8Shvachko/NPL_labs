@@ -1,0 +1,6 @@
+number_of_philosophers=7
+simulation_duration_ms=10000
+min_think_time_ms=500
+max_think_time_ms=1000
+min_eat_time_ms=500
+max_eat_time_ms=1000

@@ -1,0 +1,5 @@
+1|Hello World = Ifmmp Xpsme
+3|abc = def
+13|Caesar Cipher = Pnrfne Pvcure
+-1|Backwards = Azbjvzqcr
+0|No Change = No Change

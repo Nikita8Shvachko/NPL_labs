@@ -1,0 +1,1 @@
+/Users/askoritan/Desktop/7\ семестр/NEW_PROGRAMMING_LANGUAGES/labs/1_multithreading/3_Rust/mandelbrot/target/release/mandelbrot: /Users/askoritan/Desktop/7\ семестр/NEW_PROGRAMMING_LANGUAGES/labs/1_multithreading/3_Rust/mandelbrot/src/main.rs
