@@ -1,5 +1,5 @@
 use std::fs::{self, File};
-use std::io::{self, BufRead, BufReader, Write};
+use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use std::process::Command;
 use std::str::FromStr;
 use std::sync::{mpsc, Arc, Mutex};
@@ -43,7 +43,8 @@ impl Config {
         let mut height = 600;
         let mut max_iterations = 1000;
         let mut frames = 30;
-        let mut threads = 4;
+        // Автоматически определяем количество доступных потоков (ядер)
+        let mut threads = thread::available_parallelism().map(|n| n.get()).unwrap_or(4);
         let mut zoom_rate = 0.9;
         let mut focus_x = -0.5;
         let mut focus_y = 0.0;
@@ -61,7 +62,7 @@ impl Config {
                     "height" => height = usize::from_str(value).unwrap_or(height),
                     "max_iterations" => max_iterations = usize::from_str(value).unwrap_or(max_iterations),
                     "frames" => frames = usize::from_str(value).unwrap_or(frames),
-                    "threads" => threads = usize::from_str(value).unwrap_or(threads),
+                    // "threads" игнорируем, так как определяем автоматически
                     "zoom_rate" => zoom_rate = f64::from_str(value).unwrap_or(zoom_rate),
                     "focus_x" => focus_x = f64::from_str(value).unwrap_or(focus_x),
                     "focus_y" => focus_y = f64::from_str(value).unwrap_or(focus_y),
@@ -243,6 +244,42 @@ fn main() -> io::Result<()> {
 
     // 4. Главный цикл анимации (генерация кадров)
     
+    // Канал для отправки готовых кадров на запись (Main -> Writer)
+    let (file_sender, file_receiver) = mpsc::channel::<(usize, Vec<Vec<(u8, u8, u8)>>)>();
+    let writer_config = Arc::clone(&config);
+    let writer_frames_dir = frames_dir.to_string();
+
+    // Запускаем поток записи файлов
+    let writer_handle = thread::spawn(move || {
+        for (frame_idx, buffer) in file_receiver {
+            let filename = format!("{}/frame_{:04}.ppm", writer_frames_dir, frame_idx);
+            let file = match File::create(&filename) {
+                Ok(f) => f,
+                Err(e) => {
+                    eprintln!("Error creating file {}: {}", filename, e);
+                    continue;
+                }
+            };
+            let mut writer = BufWriter::new(file);
+
+            // Пишем заголовок PPM
+            // P3 - текстовый формат, ширина, высота, макс. значение цвета
+            if let Err(e) = writeln!(writer, "P3\n{} {}\n255", writer_config.width, writer_config.height) {
+                 eprintln!("Error writing header for {}: {}", filename, e);
+                 continue;
+            }
+
+            for row in buffer {
+                for (r, g, b) in row {
+                    if let Err(_) = write!(writer, "{} {} {} ", r, g, b) {
+                        break;
+                    }
+                }
+                if let Err(_) = writeln!(writer) { break; }
+            }
+        }
+    });
+
     // Начальные границы области (весь фрактал)
     let mut current_xmin = -2.5; // Начальная координата X
     let mut current_xmax = 1.5; // Начальная координата X
@@ -258,8 +295,6 @@ fn main() -> io::Result<()> {
         current_ymax = current_height / 2.0;
     }
 
-    let mut image_buffer = vec![vec![(0u8, 0u8, 0u8); config.width]; config.height]; // Буфер для хранения пикселей
-    
     // Удаляем лишний экземпляр result_sender у главного потока, чтобы цикл приема не завис
     drop(result_sender);
 
@@ -287,24 +322,20 @@ fn main() -> io::Result<()> {
         }
 
         // 4.2 Сбор результатов
+        // Используем Option, чтобы инициализировать вектор без аллокации лишних данных
+        let mut frame_rows: Vec<Option<Vec<(u8, u8, u8)>>> = vec![None; config.height];
+        
         // Ждем ровно столько ответов, сколько строк отправили
         for _ in 0..config.height {
             let result = result_receiver.recv().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?; // Получаем результат
-            image_buffer[result.row_index] = result.data;
+            frame_rows[result.row_index] = Some(result.data);
         }
+        
+        // Собираем полный кадр
+        let final_buffer: Vec<Vec<(u8, u8, u8)>> = frame_rows.into_iter().map(|opt| opt.unwrap()).collect();
 
-        // 4.3 Запись кадра на диск (формат PPM)
-        let filename = format!("{}/frame_{:04}.ppm", frames_dir, frame); // Имя файла
-        let mut file = File::create(&filename)?;
-        writeln!(file, "P3")?; // Магическое число PPM для формата PPM
-        writeln!(file, "{} {}", config.width, config.height)?; // Размеры для формата PPM
-        writeln!(file, "255")?; // Максимальная яркость цвета
-        for row in &image_buffer { // Записываем пиксели в файл
-            for (r, g, b) in row {
-                write!(file, "{} {} {} ", r, g, b)?;
-            }
-            writeln!(file)?;
-        }
+        // 4.3 Отправка кадра на запись в отдельный поток
+        file_sender.send((frame, final_buffer)).unwrap();
 
         // 4.4 Расчет зума для следующего кадра
         let width = current_xmax - current_xmin;
@@ -320,9 +351,10 @@ fn main() -> io::Result<()> {
         let current_center_x = current_xmin + width / 2.0;
         let current_center_y = current_ymin + height / 2.0;
         
-        // Сдвигаем центр на 10% ближе к цели на каждом шаге
-        let new_center_x = current_center_x + (config.focus_x - current_center_x) * 0.1;
-        let new_center_y = current_center_y + (config.focus_y - current_center_y) * 0.1;
+        // Сдвигаем центр пропорционально зуму, чтобы точка фокуса оставалась на месте
+        let move_factor = 1.0 - config.zoom_rate;
+        let new_center_x = current_center_x + (config.focus_x - current_center_x) * move_factor;
+        let new_center_y = current_center_y + (config.focus_y - current_center_y) * move_factor;
 
         // Пересчитываем новые границы
         current_xmin = new_center_x - new_width / 2.0;
@@ -337,6 +369,10 @@ fn main() -> io::Result<()> {
     for handle in handles {
         handle.join().unwrap(); // Ждем завершения потоков
     }
+    
+    // Закрываем канал записи и ждем завершения писателя
+    drop(file_sender);
+    writer_handle.join().unwrap();
 
     println!("Generation finished in {:.2?}", start_time.elapsed()); // Выводим время генерации в консоль
 
